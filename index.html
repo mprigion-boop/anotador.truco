@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Asado y Truco Pro</title>
+    <style>
+        :root {
+            --bg: #0f0f0f;
+            --card: #1c1c1c;
+            --accent: #00e676; /* Verde Malas */
+            --text: #ffffff;
+            --gold: #ffca28;
+            --fire: #ff5722;
+            --blue: #2196f3;
+            --buenas-color: #00bcd4; /* Celeste Buenas */
+        }
+        
+        * {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            padding-top: env(safe-area-inset-top);
+        }
+
+        .header { 
+            padding: 15px 0; 
+            text-align: center; 
+            width: 100%;
+            border-bottom: 1px solid #333;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.3rem;
+            letter-spacing: 3px;
+            color: var(--fire);
+            text-shadow: 0 0 10px rgba(255, 87, 34, 0.3);
+        }
+
+        .phase-badge {
+            display: inline-block;
+            margin-top: 5px;
+            background: var(--accent);
+            color: #000;
+            padding: 2px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .board {
+            display: flex;
+            width: 95%;
+            max-width: 600px;
+            gap: 10px;
+            flex: 1;
+            margin: 15px 0;
+        }
+
+        .team-card {
+            background: var(--card);
+            flex: 1;
+            padding: 15px 10px;
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #2a2a2a;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        .team-name { font-size: 0.9rem; font-weight: bold; color: #888; text-align: center; margin-bottom: 5px; }
+        .points-display { font-size: 4rem; font-weight: 900; color: var(--accent); text-align: center; margin: 0; line-height: 1; }
+
+        .sticks-wrapper {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex: 1;
+            padding: 15px 0;
+            align-items: flex-start;
+        }
+
+        .sticks-column {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 40px;
+        }
+
+        .stick-group { width: 38px; height: 38px; position: relative; flex-shrink: 0; margin-bottom: 5px; }
+        .stick { background: #eee; position: absolute; border-radius: 4px; box-shadow: 1px 1px 3px rgba(0,0,0,0.4); transition: all 0.2s; }
+        
+        .buenas-stick .stick { background: var(--buenas-color) !important; }
+        .buenas-stick .diag { background: var(--gold) !important; }
+
+        .h1 { height: 4px; width: 32px; top: 0; left: 3px; } 
+        .v1 { width: 4px; height: 32px; top: 3px; right: 0; } 
+        .h2 { height: 4px; width: 32px; bottom: 0; left: 3px; } 
+        .v2 { width: 4px; height: 32px; top: 3px; left: 0; } 
+        .diag { height: 4px; width: 44px; top: 17px; left: -3px; transform: rotate(-45deg); background: var(--gold); }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-action {
+            flex: 1; padding: 18px 0; border: none; border-radius: 16px;
+            font-size: 1.8rem; font-weight: bold; background: #2a2a2a; color: white;
+            box-shadow: 0 4px 0 #111;
+        }
+        .btn-action:active { transform: translateY(2px); box-shadow: 0 2px 0 #111; }
+        .btn-plus { background: var(--accent); color: #000; box-shadow: 0 4px 0 #009624; }
+        .btn-plus:active { box-shadow: 0 2px 0 #009624; }
+        
+        .footer { padding-bottom: calc(20px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .main-controls { display: flex; gap: 25px; align-items: center; }
+
+        .btn-round { color: white; border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.1s; }
+        .btn-mic { background: var(--fire); width: 75px; height: 75px; font-size: 2rem; box-shadow: 0 0 20px rgba(255, 87, 34, 0.4); }
+        .btn-speak { background: var(--blue); width: 60px; height: 60px; font-size: 1.6rem; }
+        .btn-round:active { transform: scale(0.95); }
+
+        .listening { animation: fire-pulse 1.2s infinite; border: 4px solid white; }
+        @keyframes fire-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 87, 34, 0.8); }
+            70% { box-shadow: 0 0 0 20px rgba(255, 87, 34, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 87, 34, 0); }
+        }
+
+        .status { font-size: 0.9rem; color: var(--gold); font-weight: bold; height: 20px; text-align: center; }
+        
+        .btn-reset { 
+            background: #444; 
+            border: none; 
+            color: #ff8a80; 
+            padding: 10px 20px; 
+            border-radius: 12px; 
+            font-size: 0.75rem; 
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>ASADO Y TRUCO PRO</h1>
+        <div id="phase" class="phase-badge">MALAS</div>
+    </div>
+
+    <div class="board">
+        <div class="team-card">
+            <div class="team-name">NOSOTROS</div>
+            <div id="p-nosotros" class="points-display">0</div>
+            <div class="sticks-wrapper">
+                <div class="sticks-column" id="s-nosotros-malas"></div>
+                <div class="sticks-column" id="s-nosotros-buenas"></div>
+            </div>
+            <div class="btn-group">
+                <button class="btn-action" onclick="changePoint('nosotros', -1)">−</button>
+                <button class="btn-action btn-plus" onclick="changePoint('nosotros', 1)">+</button>
+            </div>
+        </div>
+
+        <div class="team-card">
+            <div class="team-name">ELLOS</div>
+            <div id="p-ellos" class="points-display">0</div>
+            <div class="sticks-wrapper">
+                <div class="sticks-column" id="s-ellos-malas"></div>
+                <div class="sticks-column" id="s-ellos-buenas"></div>
+            </div>
+            <div class="btn-group">
+                <button class="btn-action" onclick="changePoint('ellos', -1)">−</button>
+                <button class="btn-action btn-plus" onclick="changePoint('ellos', 1)">+</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <div class="status" id="status">Mantén presionado RESET para reiniciar</div>
+        <div class="main-controls">
+            <button class="btn-round btn-speak" onclick="announceScore()" title="Cantar puntaje">📢</button>
+            <button class="btn-round btn-mic" id="voice-btn" title="Comando de voz">🎤</button>
+        </div>
+        <button class="btn-reset" id="reset-btn">MANTENER PARA RESET</button>
+    </div>
+
+    <script>
+        let score = { nosotros: 0, ellos: 0 };
+        let pending = null;
+
+        // --- MANEJO DE RESET ---
+        const resetBtn = document.getElementById('reset-btn');
+        let resetTimer;
+
+        function ejecutarReset() {
+            score.nosotros = 0;
+            score.ellos = 0;
+            pending = null;
+            updateDisplay();
+            document.getElementById('status').innerText = "Marcador en cero";
+            hablar("A barajar de nuevo, cero a cero");
+            if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        }
+
+        resetBtn.addEventListener('mousedown', () => { resetTimer = setTimeout(ejecutarReset, 1500); });
+        resetBtn.addEventListener('mouseup', () => { clearTimeout(resetTimer); });
+        resetBtn.addEventListener('touchstart', (e) => { e.preventDefault(); resetTimer = setTimeout(ejecutarReset, 1500); });
+        resetBtn.addEventListener('touchend', () => { clearTimeout(resetTimer); });
+
+        function changePoint(team, amount) {
+            score[team] = Math.max(0, Math.min(score[team] + amount, 30));
+            updateDisplay();
+            if (navigator.vibrate) navigator.vibrate(40);
+            if (score[team] === 30) hablar("¡Ganaron " + team + "!");
+        }
+
+        function updateDisplay() {
+            ['nosotros', 'ellos'].forEach(team => {
+                const pDisplay = document.getElementById(`p-${team}`);
+                pDisplay.innerText = score[team];
+                
+                // Cambio de color si está en buenas
+                pDisplay.style.color = score[team] > 15 ? "var(--buenas-color)" : "var(--accent)";
+
+                const colMalas = document.getElementById(`s-${team}-malas`);
+                const colBuenas = document.getElementById(`s-${team}-buenas`);
+                colMalas.innerHTML = '';
+                colBuenas.innerHTML = '';
+
+                for (let i = 0; i < 6; i++) {
+                    let ptsEnGrupo = Math.min(5, Math.max(0, score[team] - (i * 5)));
+                    if (ptsEnGrupo <= 0) continue;
+
+                    const group = document.createElement('div');
+                    group.className = 'stick-group' + (i >= 3 ? ' buenas-stick' : '');
+                    
+                    if (ptsEnGrupo >= 1) group.innerHTML += '<div class="stick h1"></div>';
+                    if (ptsEnGrupo >= 2) group.innerHTML += '<div class="stick v1"></div>';
+                    if (ptsEnGrupo >= 3) group.innerHTML += '<div class="stick h2"></div>';
+                    if (ptsEnGrupo >= 4) group.innerHTML += '<div class="stick v2"></div>';
+                    if (ptsEnGrupo >= 5) group.innerHTML += '<div class="stick diag"></div>';
+
+                    if (i < 3) colMalas.appendChild(group);
+                    else colBuenas.appendChild(group);
+                }
+            });
+
+            const isBuenas = (score.nosotros > 15 || score.ellos > 15);
+            const phaseEl = document.getElementById('phase');
+            phaseEl.innerText = isBuenas ? "BUENAS" : "MALAS";
+            phaseEl.style.background = isBuenas ? "var(--buenas-color)" : "var(--accent)";
+        }
+
+        // --- VOZ ---
+        function hablar(texto, callback) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(texto);
+            utterance.lang = 'es-AR';
+            utterance.rate = 1.1;
+            utterance.onend = () => { if(callback) callback(); };
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function announceScore() {
+            hablar(`Nosotros ${score.nosotros}, ellos ${score.ellos}`);
+        }
+
+        // --- RECONOCIMIENTO DE VOZ ---
+        const btn = document.getElementById('voice-btn');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (!SpeechRecognition) {
+            btn.style.display = "none";
+            document.getElementById('status').innerText = "Voz no soportada en este navegador";
+        } else {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'es-AR';
+            recognition.interimResults = false;
+
+            btn.onclick = () => { 
+                try {
+                    recognition.start(); 
+                    btn.classList.add('listening');
+                    document.getElementById('status').innerText = "Escuchando...";
+                } catch(e) { console.log("Reconocimiento ya activo"); }
+            };
+
+            recognition.onresult = (event) => {
+                const text = event.results[0][0].transcript.toLowerCase();
+                console.log("Escuchado:", text);
+                
+                if (pending) {
+                    if (text.includes("si") || text.includes("sí") || text.includes("ok") || text.includes("dale")) {
+                        changePoint(pending.team, pending.amount);
+                        hablar("Adentro");
+                    } else {
+                        hablar("Bueno, no anoto nada");
+                    }
+                    pending = null;
+                    return;
+                }
+
+                // Lógica de puntos
+                let pts = 1;
+                const nums = { 
+                    "uno":1, "un":1, "dos":2, "tres":3, "cuatro":4, "cinco":5,
+                    "seis":6, "siete":7, "ocho":8, "nueve":9, "diez":10,
+                    "once":11, "doce":12, "trece":13, "catorce":14, "quince":15 
+                };
+                
+                Object.keys(nums).forEach(n => {
+                    if (text.includes(n)) pts = nums[n];
+                });
+
+                let team = null;
+                if (text.includes("nosotros") || text.includes("nuestro") || text.includes("nuestra")) team = "nosotros";
+                if (text.includes("ellos") || text.includes("ellos")) team = "ellos";
+
+                if (team) {
+                    pending = { team, amount: pts };
+                    document.getElementById('status').innerText = `¿${pts} para ${team}?`;
+                    hablar(`${pts} para ${team}, ¿está bien?`, () => {
+                        setTimeout(() => { recognition.start(); }, 500);
+                    });
+                } else {
+                    document.getElementById('status').innerText = "No entendí a quién anotarle";
+                    hablar("¿Para quién son los puntos?");
+                }
+            };
+
+            recognition.onend = () => { if (!pending) btn.classList.remove('listening'); };
+        }
+
+        updateDisplay();
+    </script>
+</body>
+</html>
